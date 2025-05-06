@@ -1,10 +1,33 @@
 {
-    "name": "Hello Extensions",
-    "description": "Base Level Extension",
+    "manifest_version": 2,
+    "name": "Doom Scroll Less",
     "version": "1.0",
-    "manifest_version": 3,
-    "action": {
+    "description": "Base Level Extension",
+    "permissions": [
+      "tabs",
+      "activeTab",
+      "webNavigation",
+      "https://*.youtube.com/*"
+    ],
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "browser_action": {
       "default_popup": "hello.html",
       "default_icon": "icon.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/shorts/*"],
+        "js": ["content.js"],
+        "run_at": "document_end"
+      }
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "addon@example.com",
+        "strict_min_version": "42.0"
+      }
     }
-  }
+}
