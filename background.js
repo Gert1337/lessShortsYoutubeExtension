@@ -1,20 +1,32 @@
+const TESTING = true;
+
+const TIMEOUT_DURATION = TESTING ? 6000 : 10 * 60 * 1000;
+const INTERVAL_DURATION = TESTING ? 10000 : 10 * 60 * 1000;
+
 let timerStarted = false;
+let intervalId = null;
+let minutesWatched = 0;
 
 function startWatchTimer() {
   if (!timerStarted) {
     timerStarted = true;
-    console.log("⏳ Timer started for 10 minutes.");
+    console.log(`⏳ Timer started for ${TIMEOUT_DURATION / 1000} seconds.`);
+
+    intervalId = setInterval(() => {
+      minutesWatched += TESTING ? 0.166 : 10; // 0.166 minutter = 10 sekunder (test)
+      console.log(`🕒 Minutes watched: ${minutesWatched.toFixed(1)}`);
+    }, INTERVAL_DURATION);
+
     setTimeout(() => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
         if (tab?.id) {
-          // Ask content script to pause video and show confirm
-          chrome.tabs.sendMessage(tab.id, { action: "pauseAndConfirm" });
+          chrome.tabs.sendMessage(tab.id, { action: "pauseAndConfirm", minutesWatched: minutesWatched });
           console.log("📨 Sent pauseAndConfirm to contentscript", tab.id);
         }
         timerStarted = false;
       });
-    }, 6000); // 10 minutes
+    }, TIMEOUT_DURATION);
   }
 }
 
