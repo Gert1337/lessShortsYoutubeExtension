@@ -3,37 +3,23 @@ let timerStarted = false;
 function startWatchTimer() {
   if (!timerStarted) {
     timerStarted = true;
-    console.log("⏳ Timer started for 2 seconds.");
+    console.log("⏳ Timer started for 10 minutes.");
     setTimeout(() => {
-      // Pause video first in a separate stack
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
-        if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, { action: "pauseVideo" });
-          console.log("⏸️ YouTube Shorts video pause requested.");
-
-          // Give it a short moment to execute before blocking prompt
-          setTimeout(() => {
-            const userResponse = confirm(
-              "You have been watching YouTube Shorts for 10 minutes. Do you want to do something else?"
-            );
-            if (userResponse) {
-              console.log("✅ User wants to do something else.");
-            } else {
-              console.log("▶️ User wants to continue watching.");
-              chrome.tabs.sendMessage(tab.id, { action: "startVideo" });
-            }
-            timerStarted = false;
-          }, 100); // short delay ensures message is sent before blocking
+        if (tab?.id) {
+          // Ask content script to pause video and show confirm
+          chrome.tabs.sendMessage(tab.id, { action: "pauseAndConfirm" });
+          console.log("📨 Sent pauseAndConfirm to contentscript", tab.id);
         }
+        timerStarted = false;
       });
-    }, 600000);
+    }, 6000); // 10 minutes
   }
 }
 
 // Listen for URL changes with chrome.tabs.onUpdated
-chrome.tabs.onUpdated.addListener(( tab) => {
-
+chrome.tabs.onUpdated.addListener((tab) => {
   if (tab.url && tab.url.includes("youtube.com/shorts")) {
     console.log("📺 YouTube Shorts detected via URL:", tab.url);
     startWatchTimer();

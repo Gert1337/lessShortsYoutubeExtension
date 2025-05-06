@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "Doom Scroll Less",
     "version": "1.0",
-    "description": "Base Level Extension",
+    "description": "Prompts after watching YouTube Shorts for a while",
     "permissions": [
       "tabs",
       "activeTab",
