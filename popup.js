@@ -17,8 +17,20 @@ document.addEventListener("DOMContentLoaded", () => {
       updateStatus("Not on YouTube Shorts.");
     }
   });
-
 });
 
+chrome.storage.local.get(["watchHistory"], (result) => {
+  const watchHistory = result.watchHistory || [];
+  const historyContainer = document.getElementById("history-container"); // En div i din HTML
 
-
+  if (watchHistory.length === 0) {
+    historyContainer.innerHTML = "No watch history available.";
+  } else {
+    watchHistory.forEach((entry) => {
+      const historyElement = document.createElement("div");
+      const minutes = Math.floor(entry.minutes);
+      historyElement.textContent = `${entry.date}: ${minutes} minutes`;
+      historyContainer.appendChild(historyElement);
+    });
+  }
+});
