@@ -19,17 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-chrome.storage.local.get(["watchHistory"], (result) => {
+chrome.storage.local.get(["minutesWatched", "watchHistory"], (result) => {
+  const minutesWatched = result.minutesWatched || 0;
   const watchHistory = result.watchHistory || [];
-  const historyContainer = document.getElementById("history-container"); // En div i din HTML
+  const historyContainer = document.getElementById("history-container");
 
   if (watchHistory.length === 0) {
     historyContainer.innerHTML = "No watch history available.";
   } else {
     watchHistory.forEach((entry) => {
       const historyElement = document.createElement("div");
-      const minutes = Math.floor(entry.minutes);
-      historyElement.textContent = `${entry.date}: ${minutes} minutes`;
+      historyElement.textContent = `${entry.date}: ${minutesWatched} minutes`;
       historyContainer.appendChild(historyElement);
     });
   }
