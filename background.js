@@ -1,7 +1,7 @@
 const TESTING = true;
 
-const TIMEOUT_DURATION = TESTING ? 6000 : 10 * 60 * 1000;
-const INTERVAL_DURATION = TESTING ? 10000 : 10 * 60 * 1000;
+const TIMEOUT_DURATION = TESTING ? 12000 : 10 * 60 * 1000;
+const INTERVAL_DURATION = TESTING ? 5000 : 60 * 1000;
 
 let timerStarted = false;
 let intervalId = null;
@@ -32,20 +32,26 @@ function startWatchTimer() {
     timerStarted = true;
     console.log(`⏳ Timer started for ${TIMEOUT_DURATION / 1000} seconds.`);
 
-    if (intervalId) clearInterval(intervalId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
 
-    intervalId = setInterval(() => {
-      minutesWatched += TESTING ? 0.166 : 10; // 0.166 minutter = 10 sekunder (test)
-      console.log(`🕒 Minutes watched: ${minutesWatched.toFixed(1)}`);
+    chrome.storage.local.get(["minutesWatched"], (result) => {
+      minutesWatched = result.minutesWatched || 0;
 
-      chrome.storage.local.set({ minutesWatched });
-      chrome.browserAction.setBadgeText({
-        text: Math.floor(minutesWatched).toString(),
-      });
-    }, INTERVAL_DURATION);
+      intervalId = setInterval(() => {
+        minutesWatched += TESTING ? 0.166 : 10;
+        console.log(`🕒 Minutes watched: ${minutesWatched.toFixed(1)}`);
 
+        chrome.storage.local.set({ minutesWatched });
+        chrome.browserAction.setBadgeText({
+          text: Math.floor(minutesWatched).toString(),
+        });
+      }, INTERVAL_DURATION);
+    });
 
-     setTimeout(() => {
+    setTimeout(() => {
       chrome.storage.local.get(["minutesWatched"], (result) => {
         const storedMinutesWatched = result.minutesWatched || 0;
 
@@ -53,16 +59,26 @@ function startWatchTimer() {
           const tab = tabs[0];
           if (tab?.id) {
             // Send the minutesWatched to the content script
-            chrome.tabs.sendMessage(tab.id, {
-              action: "pauseAndConfirm",
-              minutesWatched: storedMinutesWatched,
-            }, (response) => {
-              if (chrome.runtime.lastError) {
-                console.error("Failed to send message:", chrome.runtime.lastError);
-              } else {
-                console.log("📨 Sent pauseAndConfirm to contentscript", tab.id);
+            chrome.tabs.sendMessage(
+              tab.id,
+              {
+                action: "pauseAndConfirm",
+                minutesWatched: storedMinutesWatched,
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error(
+                    "Failed to send message:",
+                    chrome.runtime.lastError
+                  );
+                } else {
+                  console.log(
+                    "📨 Sent pauseAndConfirm to contentscript",
+                    tab.id
+                  );
+                }
               }
-            });
+            );
           } else {
             console.error("No active tab found");
           }
@@ -123,3 +139,9 @@ if (chrome.webNavigation && chrome.webNavigation.onHistoryStateUpdated) {
     "❌ webNavigation API not available. Check manifest permissions."
   );
 }
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "restartWatchTimer") {
+    console.log("🔁 Restarting watch timer from content script...");
+    startWatchTimer();
+  }
+});

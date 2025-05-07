@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (!userResponse && video.paused) {
             video.play();
             console.log("▶️ User wants to keep watching. Video resumed.");
+            chrome.runtime.sendMessage({ action: "restartWatchTimer" });
           } else {
             console.log("✅ User wants to take a break.");
           }
