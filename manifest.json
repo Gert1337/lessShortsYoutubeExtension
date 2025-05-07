@@ -7,6 +7,7 @@
       "tabs",
       "activeTab",
       "webNavigation",
+      "storage",
       "https://*.youtube.com/*"
     ],
     "background": {

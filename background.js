@@ -6,15 +6,23 @@ const INTERVAL_DURATION = TESTING ? 10000 : 10 * 60 * 1000;
 let timerStarted = false;
 let intervalId = null;
 let minutesWatched = 0;
+chrome.storage.local.get(["minutesWatched"], (result) => {
+  minutesWatched = result.minutesWatched || 0;
+  console.log(`🔁 Restored minutesWatched: ${minutesWatched}`);
+  chrome.browserAction.setBadgeText({ text: Math.floor(minutesWatched).toString() });
+});
+chrome.browserAction.setBadgeBackgroundColor({ color: '#FF0000' });
 
 function startWatchTimer() {
   if (!timerStarted) {
     timerStarted = true;
     console.log(`⏳ Timer started for ${TIMEOUT_DURATION / 1000} seconds.`);
-
+    if (intervalId) clearInterval(intervalId);
     intervalId = setInterval(() => {
       minutesWatched += TESTING ? 0.166 : 10; // 0.166 minutter = 10 sekunder (test)
       console.log(`🕒 Minutes watched: ${minutesWatched.toFixed(1)}`);
+      chrome.storage.local.set({ minutesWatched });
+      chrome.browserAction.setBadgeText({ text: Math.floor(minutesWatched).toString() });
     }, INTERVAL_DURATION);
 
     setTimeout(() => {
