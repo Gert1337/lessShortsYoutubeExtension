@@ -1,4 +1,10 @@
 console.log("🧠 content.js loaded");
+function formatTime(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.floor(minutes % 60);
+  const secs = Math.floor((minutes - Math.floor(minutes)) * 60);
+  return `${hours}h ${mins}m ${secs}s`;
+}
 chrome.runtime.sendMessage({ url: window.location.href });
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "pauseAndConfirm") {
@@ -21,7 +27,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         setTimeout(() => {
           const userResponse = confirm(
-            `You have been watching YouTube Shorts for ${message.minutesWatched} minutes. Do you want to do something else?`
+            `You have been watching YouTube Shorts for ${formatTime(
+              message.minutesWatched
+            )} minutes. Do you want to do something else?`
           );
           if (!userResponse && video.paused) {
             video.play();

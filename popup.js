@@ -19,17 +19,24 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+function formatTime(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.floor(minutes % 60);
+  const secs = Math.floor((minutes - Math.floor(minutes)) * 60);
+  return `${hours}h ${mins}m ${secs}s`;
+}
+
 chrome.storage.local.get(["minutesWatched", "watchHistory"], (result) => {
   const minutesWatched = result.minutesWatched || 0;
   const watchHistory = result.watchHistory || [];
   const historyContainer = document.getElementById("history-container");
-
+  const formattedTime = formatTime(minutesWatched);
   if (watchHistory.length === 0) {
     historyContainer.innerHTML = "No watch history available.";
   } else {
     watchHistory.forEach((entry) => {
       const historyElement = document.createElement("div");
-      historyElement.textContent = `${entry.date}: ${minutesWatched} minutes`;
+      historyElement.textContent = `${entry.date}: ${formattedTime}`;
       historyContainer.appendChild(historyElement);
     });
   }
