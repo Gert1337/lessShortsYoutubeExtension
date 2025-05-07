@@ -31,6 +31,7 @@ function startWatchTimer() {
   if (!timerStarted) {
     timerStarted = true;
     console.log(`⏳ Timer started for ${TIMEOUT_DURATION / 1000} seconds.`);
+
     if (intervalId) clearInterval(intervalId);
 
     intervalId = setInterval(() => {
@@ -43,19 +44,31 @@ function startWatchTimer() {
       });
     }, INTERVAL_DURATION);
 
-    setTimeout(() => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-        if (tab?.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            action: "pauseAndConfirm",
-            minutesWatched: minutesWatched,
-          });
-          console.log("📨 Sent pauseAndConfirm to contentscript", tab.id);
-        }
-        timerStarted = false;
 
-        // Get today's date and store the watched minutes
+     setTimeout(() => {
+      chrome.storage.local.get(["minutesWatched"], (result) => {
+        const storedMinutesWatched = result.minutesWatched || 0;
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const tab = tabs[0];
+          if (tab?.id) {
+            // Send the minutesWatched to the content script
+            chrome.tabs.sendMessage(tab.id, {
+              action: "pauseAndConfirm",
+              minutesWatched: storedMinutesWatched,
+            }, (response) => {
+              if (chrome.runtime.lastError) {
+                console.error("Failed to send message:", chrome.runtime.lastError);
+              } else {
+                console.log("📨 Sent pauseAndConfirm to contentscript", tab.id);
+              }
+            });
+          } else {
+            console.error("No active tab found");
+          }
+        });
+
+        // Store the watch history for today
         const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
         chrome.storage.local.get(["watchHistory"], (result) => {
           const watchHistory = result.watchHistory || [];
@@ -63,17 +76,20 @@ function startWatchTimer() {
             (entry) => entry.date === today
           );
 
-          // If today's entry exists, update it, otherwise add a new entry
+          // Update or add the minutes watched for today
           if (todayIndex !== -1) {
-            watchHistory[todayIndex].minutes = minutesWatched;
+            watchHistory[todayIndex].minutes = storedMinutesWatched;
           } else {
-            watchHistory.push({ date: today, minutes: minutesWatched });
+            watchHistory.push({ date: today, minutes: storedMinutesWatched });
           }
 
           // Save the updated watchHistory to storage
           chrome.storage.local.set({ watchHistory });
         });
       });
+
+      // Stop the timer after sending the data
+      timerStarted = false;
     }, TIMEOUT_DURATION);
   }
 }
